@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+int accelerationSampleRateMS = 33;
+
 ButtonStyle textButtonStyle(BuildContext context) {
   return TextButton.styleFrom(
     foregroundColor: Theme.of(context).colorScheme.onSecondary,

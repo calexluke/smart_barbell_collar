@@ -1,6 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'sensor_manager.dart';
 import 'constants.dart';
@@ -27,8 +27,11 @@ class _HomePageState extends State<HomePage> {
   String buttonText = "Start Sensor";
   bool collectingData = false;
 
+  Timer? sampleRateTimer;
+
   // subscription variables for sensor stream
   Acceleration _latestAccelerometerValue = Acceleration(0, 0, 0);
+  Acceleration _latestUserAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestGravityValue = Acceleration(0, 0, 0);
   double _verticalAcceleration = 0.0;
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
@@ -139,21 +142,53 @@ class _HomePageState extends State<HomePage> {
                   _latestAccelerometerValue.z - event.z);
           setState(() {
             _latestGravityValue = gravity;
+            _latestUserAccelerometerValue = Acceleration(event.x, event.y, event.z);
           });
         },
       ),
     );
-  }
 
-  void updateVerticalAcceleration() {
-
+    sampleRateTimer = Timer.periodic(
+        Duration(milliseconds: accelerationSampleRateMS),
+            (timer) => updateVerticalAcceleration());
   }
 
   void cancelSensorSubscriptions() {
     for (final subscription in _streamSubscriptions) {
       subscription.cancel();
     }
+
+    sampleRateTimer?.cancel();
   }
+
+  void updateVerticalAcceleration() {
+    double verticalAcceleration = getVerticalAcceleration(_latestUserAccelerometerValue, _latestGravityValue);
+    setState(() {
+      _verticalAcceleration = verticalAcceleration;
+    });
+  }
+
+  double getVerticalAcceleration(Acceleration userAccel, Acceleration gravity) {
+
+    // calculate the vertical acceleration magnitude - user acceleration in the opposite direction from gravity
+
+    double ax = userAccel.x;
+    double ay = userAccel.y;
+    double az = userAccel.z;
+
+    double gx = gravity.x;
+    double gy = gravity.y;
+    double gz = gravity.z;
+
+    double gravityMagnitude = sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
+
+    // projection of acceleration in the opposite direction of gravity
+    double dotProduct = (ax * gx) + (ay * gy) + (az * gz);
+    double scaledResult = (dotProduct / gravityMagnitude) * -1.0;
+
+    return scaledResult;
+  }
+
 
   void toggleDataCollection() {
     setState(() {
