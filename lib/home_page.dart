@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'sensor_manager.dart';
 import 'constants.dart';
 
 class HomePage extends StatefulWidget {
@@ -21,29 +24,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _counter = 0;
   String buttonText = "Start Sensor";
   bool collectingData = false;
 
-  Column accelerationStack(AccelerometerEvent event) {
-    return Column(
-      children: [
-        Text('X: ${event.x}',
-        style: Theme.of(context).textTheme.bodyMedium),
-        Text('Y: ${event.y}',
-            style: Theme.of(context).textTheme.bodyMedium),
-        Text('Z: ${event.z}',
-            style: Theme.of(context).textTheme.bodyMedium),
-      ],
-    );
-  }
-
-  void toggleDataCollection() {
-    setState(() {
-      collectingData = !collectingData;
-      buttonText = collectingData ? "Stop Sensor" : "Start Sensor";
-    });
-  }
+  // subscription variables for sensor stream
+  Acceleration _latestAccelerometerValue = Acceleration(0, 0, 0);
+  Acceleration _latestGravityValue = Acceleration(0, 0, 0);
+  double _verticalAcceleration = 0.0;
+  final _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
   @override
   Widget build(BuildContext context) {
@@ -55,38 +43,20 @@ class _HomePageState extends State<HomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
               child: Text(
-                'User Acceleration:',
+                'Total Acceleration:',
                   style: Theme.of(context).textTheme.headline5
               ),
             ),
-            accelerationStack(AccelerometerEvent(0.0, 0.0, 0.0)),
+            accelerationStack(_latestAccelerometerValue),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Text(
@@ -94,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                   style: Theme.of(context).textTheme.headline5
               ),
             ),
-            accelerationStack(AccelerometerEvent(0.0, 0.0, 0.0)),
+            accelerationStack(_latestGravityValue),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Text(
@@ -103,7 +73,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Text(
-              '0.0',
+              _verticalAcceleration.toStringAsFixed(2),
                 style: Theme.of(context).textTheme.bodyMedium
             ),
             Spacer(),
@@ -121,5 +91,80 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    cancelSensorSubscriptions();
+  }
+
+  Column accelerationStack(Acceleration event) {
+    return Column(
+      children: [
+        Text('X: ${event.x.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.bodyMedium),
+        Text('Y: ${event.y.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.bodyMedium),
+        Text('Z: ${event.z.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.bodyMedium),
+      ],
+    );
+  }
+
+  // TODO: move all this sensor functionality into SensorManager
+
+  // sensor subscription methods
+  void subscribeToSensors() {
+    // subscribe to total acceleration
+    _streamSubscriptions.add(
+      accelerometerEvents.listen(
+            (AccelerometerEvent event) {
+          setState(() {
+            _latestAccelerometerValue = Acceleration(event.x, event.y, event.z);
+          });
+        },
+      ),
+    );
+
+    // subscribe to user acceleration, calculate gravity
+    _streamSubscriptions.add(
+      userAccelerometerEvents.listen(
+            (UserAccelerometerEvent event) {
+
+              // calculate gravity: total acceleration - user acceleration
+              Acceleration gravity = Acceleration(
+                  _latestAccelerometerValue.x - event.x,
+                  _latestAccelerometerValue.y - event.y,
+                  _latestAccelerometerValue.z - event.z);
+          setState(() {
+            _latestGravityValue = gravity;
+          });
+        },
+      ),
+    );
+  }
+
+  void updateVerticalAcceleration() {
+
+  }
+
+  void cancelSensorSubscriptions() {
+    for (final subscription in _streamSubscriptions) {
+      subscription.cancel();
+    }
+  }
+
+  void toggleDataCollection() {
+    setState(() {
+      collectingData = !collectingData;
+      buttonText = collectingData ? "Stop Sensor" : "Start Sensor";
+    });
+
+    if (collectingData) {
+      subscribeToSensors();
+    } else {
+      cancelSensorSubscriptions();
+    }
   }
 }
