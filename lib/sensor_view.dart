@@ -4,26 +4,18 @@ import 'dart:math';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'sensor_manager.dart';
 import 'constants.dart';
+import 'file_handler.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class SensorViewPage extends StatefulWidget {
+  const SensorViewPage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<SensorViewPage> createState() => _SensorViewPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _SensorViewPageState extends State<SensorViewPage> {
   String buttonText = "Start Sensor";
   bool collectingData = false;
 
@@ -33,20 +25,21 @@ class _HomePageState extends State<HomePage> {
   Acceleration _latestAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestUserAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestGravityValue = Acceleration(0, 0, 0);
-  double _verticalAcceleration = 0.0;
+  List<AccelerationDataPoint> _verticalAccelerationData = [AccelerationDataPoint(0.0, DateTime.now())];
+
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
+  FileHandler handler = FileHandler();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          IconButton(
+          onPressed: writeToCSVFile,
+              icon: const Icon(Icons.ios_share))
+        ],
       ),
       body: Center(
         child: Column(
@@ -76,10 +69,10 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Text(
-              _verticalAcceleration.toStringAsFixed(2),
+              _verticalAccelerationData.last.verticalAcceleration.toStringAsFixed(2),
                 style: Theme.of(context).textTheme.bodyMedium
             ),
-            Spacer(),
+            const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 50),
               child: TextButton(
@@ -114,6 +107,15 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
+  void writeToCSVFile() async {
+    // only write to file if some data has been collected.
+    if (_verticalAccelerationData.length > 1) {
+      handler.writeAccelerations(_verticalAccelerationData);
+      handler.shareCSVFile();
+    }
+  }
+
 
   // TODO: move all this sensor functionality into SensorManager
 
@@ -163,8 +165,9 @@ class _HomePageState extends State<HomePage> {
 
   void updateVerticalAcceleration() {
     double verticalAcceleration = getVerticalAcceleration(_latestUserAccelerometerValue, _latestGravityValue);
+    AccelerationDataPoint dataPoint = AccelerationDataPoint(verticalAcceleration, DateTime.now());
     setState(() {
-      _verticalAcceleration = verticalAcceleration;
+      _verticalAccelerationData.add(dataPoint);
     });
   }
 
@@ -186,7 +189,11 @@ class _HomePageState extends State<HomePage> {
     double dotProduct = (ax * gx) + (ay * gy) + (az * gz);
     double scaledResult = (dotProduct / gravityMagnitude) * -1.0;
 
-    return scaledResult;
+    if (scaledResult.isNaN) {
+      return 0.0;
+    } else {
+      return scaledResult;
+    }
   }
 
 
@@ -197,6 +204,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     if (collectingData) {
+      // _verticalAccelerationData.clear();
       subscribeToSensors();
     } else {
       cancelSensorSubscriptions();
