@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'sensor_view.dart';
 import 'constants.dart';
+import 'exercise_type.dart';
 
 // Home page - user selects exercise
-
-enum ExerciseType { squat, benchPress, deadlift }
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key, required this.title});
@@ -16,7 +15,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  ExerciseType? _selectedExercise = ExerciseType.squat;
+  ExerciseType _selectedExercise = ExerciseType.squat;
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +33,9 @@ class _HomeViewState extends State<HomeView> {
               child: Text("Select Exercise",
                   style: Theme.of(context).textTheme.headline4),
             ),
-            exerciseRadioRow(ExerciseType.squat, "Squat"),
-            exerciseRadioRow(ExerciseType.benchPress, "Bench Press"),
-            exerciseRadioRow(ExerciseType.deadlift, "Deadlift"),
+            exerciseRadioRow(ExerciseType.squat),
+            exerciseRadioRow(ExerciseType.benchPress),
+            exerciseRadioRow(ExerciseType.deadlift),
             const Spacer(),
             Padding(
                 padding: const EdgeInsets.symmetric(vertical: 50),
@@ -49,7 +48,7 @@ class _HomeViewState extends State<HomeView> {
                       return Container(
                           height: MediaQuery.of(context).size.height * 0.8,
                           child:
-                            SensorViewPage(title: "Access Sensors")
+                            SensorViewPage(title: _selectedExercise.displayString)
                       );
                     }
                 )
@@ -65,16 +64,16 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  ListTile exerciseRadioRow(ExerciseType selection, String text) {
+  ListTile exerciseRadioRow(ExerciseType selection) {
     return ListTile(
-      title: Text(text),
+      title: Text(selection.displayString),
       leading: Radio<ExerciseType>(
         activeColor: Theme.of(context).colorScheme.secondary,
         value: selection,
         groupValue: _selectedExercise,
         onChanged: (ExerciseType? selection) {
           setState(() {
-            _selectedExercise = selection;
+            _selectedExercise = selection ?? ExerciseType.squat;
           });
         },
       ),
