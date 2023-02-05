@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sensor_view.dart';
+import 'package:smart_barbell_collar/home_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
             secondary: Colors.blueGrey,
         )
       ),
-      home: const SensorViewPage(title: 'Smart Barbell Collar'),
+      home: const HomeView(title: 'Smart Barbell Collar'),
     );
   }
 }

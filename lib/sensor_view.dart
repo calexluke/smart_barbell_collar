@@ -35,6 +35,7 @@ class _SensorViewPageState extends State<SensorViewPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        automaticallyImplyLeading: false, // hides back button in app bar
         actions: [
           IconButton(
           onPressed: writeToCSVFile,
