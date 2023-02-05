@@ -5,6 +5,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'sensor_manager.dart';
 import 'constants.dart';
 import 'file_handler.dart';
+import 'package:flutter/services.dart';
 
 class SensorViewPage extends StatefulWidget {
   const SensorViewPage({super.key, required this.title});
@@ -26,6 +27,7 @@ class _SensorViewPageState extends State<SensorViewPage> {
   Acceleration _latestUserAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestGravityValue = Acceleration(0, 0, 0);
   List<AccelerationDataPoint> _verticalAccelerationData = [AccelerationDataPoint(0.0, DateTime.now())];
+  int _selectedWeight = 135;
 
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
   FileHandler handler = FileHandler();
@@ -46,22 +48,49 @@ class _SensorViewPageState extends State<SensorViewPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-              child: Text(
-                'Total Acceleration:',
-                  style: Theme.of(context).textTheme.headline5
+            const Spacer(),
+            Text(
+              'Select Weight',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    _selectedWeight.toString(),
+                    style: Theme.of(context).textTheme.headline3,
+                  ),
+                  Text(
+                    ' lbs',
+                    style: Theme.of(context).textTheme.headline5,
+                  )
+                ]),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: Colors.white,
+                  inactiveTrackColor: const Color(0xFF8D8E98),
+                  thumbColor: Theme.of(context).colorScheme.secondary,
+                  overlayColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                  thumbShape:
+                  const RoundSliderThumbShape(enabledThumbRadius: 15.0),
+                  overlayShape:
+                  const RoundSliderOverlayShape(overlayRadius: 25.0)),
+              child: Slider(
+                value: _selectedWeight.toDouble(),
+                min: 45.0,
+                max: 585.0,
+                onChanged: (double newValue) {
+                  int intValue = newValue.round();
+                  int nearestFivePounds = (intValue ~/ 5) * 5;
+                  setState(() {
+                    _selectedWeight = nearestFivePounds;
+                  });
+                },
               ),
             ),
-            accelerationStack(_latestAccelerometerValue),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                  'Gravity:',
-                  style: Theme.of(context).textTheme.headline5
-              ),
-            ),
-            accelerationStack(_latestGravityValue),
+            const Spacer(),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Text(

@@ -45,10 +45,14 @@ class _HomeViewState extends State<HomeView> {
                     isScrollControlled: true,
                     context: context,
                     builder: (BuildContext context) {
-                      return Container(
-                          height: MediaQuery.of(context).size.height * 0.8,
-                          child:
-                            SensorViewPage(title: _selectedExercise.displayString)
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).viewInsets.bottom),
+                        child: Container(
+                            height: MediaQuery.of(context).size.height * 0.8,
+                            child:
+                              SensorViewPage(title: _selectedExercise.displayString)
+                        ),
                       );
                     }
                 )
