@@ -39,6 +39,7 @@ class SensorManager {
       velocityData.add(newValue);
     }
 
+    // print("velocity data: $velocityData");
     return velocityData;
   }
 
@@ -66,13 +67,15 @@ class SensorManager {
     while (velocityData[left] > 0 && left > 0) {
       left -= 1;
     }
-
     while (velocityData[right] > 0 && right < velocityData.length) {
       right += 1;
     }
+    // move back in to avoid getting a negative value
+    left += 1;
+    right -= 1;
 
     List<double> repArray = velocityData.sublist(left, right + 1);
-    print("Rep array: \n $repArray");
+    // print("Rep array: \n $repArray");
 
     return repArray;
   }
