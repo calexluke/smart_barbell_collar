@@ -37,29 +37,30 @@ class FileHandler {
     }
   }
 
-  Future<File> writeAccelerations(List<AccelerationDataPoint> accelerationData) async {
+  Future<File> writeAccelerations(List<SensorDataPoint> accelerationData) async {
     File file = await _accelerationFile;
     String csvFileData = getCSVString(accelerationData);
     file = await file.writeAsString(csvFileData);
     return file;
   }
 
-  String getCSVString(List<AccelerationDataPoint> accelerationData) {
+  String getCSVString(List<SensorDataPoint> accelerationData) {
 
     // remove first element (placeholder from UI)
-    if (accelerationData.isNotEmpty) {
-    accelerationData.removeAt(0);
+    List<SensorDataPoint> accelerationDataCopy = accelerationData;
+    if (accelerationDataCopy.isNotEmpty) {
+      accelerationDataCopy.removeAt(0);
     }
 
     // column headings
     String csvString = 't,ay\n';
     // add each data point
     double timeStep = 0.0;
-    for (int i = 0; i < accelerationData.length; i++) {
-      String dataString = accelerationData[i].verticalAcceleration.toString();
+    for (int i = 0; i < accelerationDataCopy.length; i++) {
+      String dataString = accelerationDataCopy[i].value.toString();
       if (i > 0) {
-        DateTime previousTimeStamp = accelerationData[i - 1].timeStamp;
-        DateTime currentTimeStamp = accelerationData[i].timeStamp;
+        DateTime previousTimeStamp = accelerationDataCopy[i - 1].timeStamp;
+        DateTime currentTimeStamp = accelerationDataCopy[i].timeStamp;
         int differenceMicroseconds = currentTimeStamp.difference(previousTimeStamp).inMicroseconds;
         double differenceSeconds = differenceMicroseconds.toDouble() / Duration.microsecondsPerSecond;
         timeStep = timeStep + differenceSeconds;

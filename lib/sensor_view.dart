@@ -26,7 +26,9 @@ class _SensorViewPageState extends State<SensorViewPage> {
   Acceleration _latestAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestUserAccelerometerValue = Acceleration(0, 0, 0);
   Acceleration _latestGravityValue = Acceleration(0, 0, 0);
-  List<AccelerationDataPoint> _verticalAccelerationData = [AccelerationDataPoint(0.0, DateTime.now())];
+  // double peakVelocityDuringRep = 0.0;
+  double _meanVelocityDuringRep = 0.0;
+  List<SensorDataPoint> _verticalAccelerationData = [SensorDataPoint(0.0, DateTime.now())];
   int _selectedWeight = 135;
 
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
@@ -99,7 +101,18 @@ class _SensorViewPageState extends State<SensorViewPage> {
               ),
             ),
             Text(
-              _verticalAccelerationData.last.verticalAcceleration.toStringAsFixed(2),
+              _verticalAccelerationData.last.value.toStringAsFixed(2),
+                style: Theme.of(context).textTheme.bodyMedium
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                  'Mean Velocity During Rep:',
+                  style: Theme.of(context).textTheme.headline5
+              ),
+            ),
+            Text(
+                _meanVelocityDuringRep.toStringAsFixed(2),
                 style: Theme.of(context).textTheme.bodyMedium
             ),
             const Spacer(),
@@ -195,7 +208,7 @@ class _SensorViewPageState extends State<SensorViewPage> {
 
   void updateVerticalAcceleration() {
     double verticalAcceleration = getVerticalAcceleration(_latestUserAccelerometerValue, _latestGravityValue);
-    AccelerationDataPoint dataPoint = AccelerationDataPoint(verticalAcceleration, DateTime.now());
+    SensorDataPoint dataPoint = SensorDataPoint(verticalAcceleration, DateTime.now());
     setState(() {
       _verticalAccelerationData.add(dataPoint);
     });
@@ -235,9 +248,28 @@ class _SensorViewPageState extends State<SensorViewPage> {
 
     if (collectingData) {
       // _verticalAccelerationData.clear();
+      // reset the array for next rep
+      _verticalAccelerationData = [SensorDataPoint(0.0, DateTime.now())];
       subscribeToSensors();
     } else {
       cancelSensorSubscriptions();
+      // do velocity calculation and rep detection here
+
+      List<SensorDataPoint> accelerationDataCopy = _verticalAccelerationData;
+      if (accelerationDataCopy.isNotEmpty) {
+        // remove first element, which is the default value (placeholder) in the UI
+        accelerationDataCopy.removeAt(0);
+        SensorManager manager = SensorManager();
+        List<double> velocityArray = manager.velocityArrayFromAccelerationData(accelerationDataCopy);
+        List<double> repData = manager.getIsolatedRep(velocityArray);
+        double meanValue = manager.meanVelocity(repData);
+
+        setState(() {
+          _meanVelocityDuringRep = meanValue;
+        });
+
+      }
+
     }
   }
 }
