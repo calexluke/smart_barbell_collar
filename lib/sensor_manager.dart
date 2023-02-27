@@ -67,7 +67,7 @@ class SensorManager {
     while (velocityData[left] > 0 && left > 0) {
       left -= 1;
     }
-    while (velocityData[right] > 0 && right < velocityData.length) {
+    while (velocityData[right] > 0 && right < (velocityData.length - 1)) {
       right += 1;
     }
     // move back in to avoid getting a negative value
@@ -82,5 +82,14 @@ class SensorManager {
 
   double meanVelocity(List<double> velocityData) {
     return velocityData.average;
+  }
+
+  double percent1RM(double meanVelocity) {
+    // calculate %1RM from velocity input and generic load/velocity curve from literature
+    // TODO: get slope and intercept from custom calibration curve for use and exercise
+    double slope = 1.179;
+    double intercept = -0.685;
+    double loadPercentage = slope + (intercept * meanVelocity);
+    return loadPercentage;
   }
 }

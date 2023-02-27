@@ -28,8 +28,13 @@ class _SensorViewPageState extends State<SensorViewPage> {
   Acceleration _latestGravityValue = Acceleration(0, 0, 0);
   // double peakVelocityDuringRep = 0.0;
   double _meanVelocityDuringRep = 0.0;
+  String _resultText = "No result yet";
+
   List<SensorDataPoint> _verticalAccelerationData = [SensorDataPoint(0.0, DateTime.now())];
   int _selectedWeight = 135;
+  int estimated1RMPercent = 0;
+  int estimated1RMLoad = 0;
+
 
   final _streamSubscriptions = <StreamSubscription<dynamic>>[];
   FileHandler handler = FileHandler();
@@ -84,8 +89,9 @@ class _SensorViewPageState extends State<SensorViewPage> {
                 min: 45.0,
                 max: 585.0,
                 onChanged: (double newValue) {
-                  int intValue = newValue.round();
-                  int nearestFivePounds = (intValue ~/ 5) * 5;
+                  int nearestFivePounds = roundedToNearest5(newValue);
+                  // int intValue = newValue.round();
+                  // int nearestFivePounds = (intValue ~/ 5) * 5;
                   setState(() {
                     _selectedWeight = nearestFivePounds;
                   });
@@ -113,6 +119,17 @@ class _SensorViewPageState extends State<SensorViewPage> {
             ),
             Text(
                 _meanVelocityDuringRep.toStringAsFixed(2),
+                style: Theme.of(context).textTheme.bodyMedium
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                  'Results:',
+                  style: Theme.of(context).textTheme.headline5
+              ),
+            ),
+            Text(
+                _resultText,
                 style: Theme.of(context).textTheme.bodyMedium
             ),
             const Spacer(),
@@ -185,6 +202,9 @@ class _SensorViewPageState extends State<SensorViewPage> {
                   _latestAccelerometerValue.x - event.x,
                   _latestAccelerometerValue.y - event.y,
                   _latestAccelerometerValue.z - event.z);
+              // print("User acceleration: x: ${event.x} y: ${event.y} z: ${event.z}");
+              // print("TotalAcceleration: x: ${_latestAccelerometerValue.x} y: ${_latestAccelerometerValue.y} z: ${_latestAccelerometerValue.z}");
+              // print("Gravity: x: ${gravity.x} y: ${gravity.y} z: ${gravity.z}");
           setState(() {
             _latestGravityValue = gravity;
             _latestUserAccelerometerValue = Acceleration(event.x, event.y, event.z);
@@ -227,10 +247,18 @@ class _SensorViewPageState extends State<SensorViewPage> {
     double gz = gravity.z;
 
     double gravityMagnitude = sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
-
     // projection of acceleration in the opposite direction of gravity
     double dotProduct = (ax * gx) + (ay * gy) + (az * gz);
-    double scaledResult = (dotProduct / gravityMagnitude) * -1.0;
+    // sign issue: might need to multiply by -1
+    double scaledResult = (dotProduct / gravityMagnitude);
+
+    // debug print statements:
+    // print("Calculate Vertical accelleration");
+    // print("user accel: x: $ax y: $ay z: $az");
+    // print("Gravity: x: $gx y: $gy z: $gz");
+    // print("gravity magnitude: $gravityMagnitude");
+    // print("dot product: $dotProduct");
+    // print("scaled result: $scaledResult");
 
     if (scaledResult.isNaN) {
       return 0.0;
@@ -256,20 +284,38 @@ class _SensorViewPageState extends State<SensorViewPage> {
       // do velocity calculation and rep detection here
 
       List<SensorDataPoint> accelerationDataCopy = _verticalAccelerationData;
+      print("Acceleration data count: ${accelerationDataCopy.length}");
       if (accelerationDataCopy.isNotEmpty) {
         // remove first element, which is the default value (placeholder) in the UI
         accelerationDataCopy.removeAt(0);
         SensorManager manager = SensorManager();
+
+        // calculate velocity from acceleration, isolate rep
         List<double> velocityArray = manager.velocityArrayFromAccelerationData(accelerationDataCopy);
         List<double> repData = manager.getIsolatedRep(velocityArray);
-        double meanValue = manager.meanVelocity(repData);
+        double meanVelocity = manager.meanVelocity(repData);
+
+        // calculate estimated 1rm from velocity data
+        double percent1RM = manager.percent1RM(meanVelocity);
+        double load1RM = _selectedWeight.toDouble() / percent1RM;
+        int loadToNearest5 = roundedToNearest5(load1RM);
+        int roundedPercent = (percent1RM * 100).round();
+
+        String resultMessage = "We estimate that $_selectedWeight lbs is $roundedPercent% of your 1RM, \nAnd your actual 1RM is $loadToNearest5 lbs";
 
         setState(() {
-          _meanVelocityDuringRep = meanValue;
+          _meanVelocityDuringRep = meanVelocity;
+          _resultText = resultMessage;
         });
 
       }
 
     }
+  }
+
+  int roundedToNearest5(double value) {
+    int intValue = value.round();
+    int nearestFive = (intValue ~/ 5) * 5;
+    return nearestFive;
   }
 }
