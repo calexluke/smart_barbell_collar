@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'sensor_view.dart';
 import 'constants.dart';
 import 'exercise_type.dart';
+import 'calibration_view.dart';
 
 // Home page - user selects exercise
 
@@ -41,21 +42,9 @@ class _HomeViewState extends State<HomeView> {
                 padding: const EdgeInsets.symmetric(vertical: 50),
               child: TextButton(
                 onPressed: () => {
-                showModalBottomSheet(
-                    isScrollControlled: true,
-                    context: context,
-                    builder: (BuildContext context) {
-                      return SingleChildScrollView(
-                        padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).viewInsets.bottom),
-                        child: Container(
-                            height: MediaQuery.of(context).size.height * 0.8,
-                            child:
-                              SensorViewPage(title: _selectedExercise.displayString)
-                        ),
-                      );
-                    }
-                )
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return CalibrationView(exercise: _selectedExercise);
+                  }))
               },
                   child: Text("Start Exercise"),
                   style: textButtonStyle(context),
