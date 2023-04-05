@@ -6,6 +6,8 @@ import 'sensor_manager.dart';
 import 'constants.dart';
 import 'file_handler.dart';
 import 'package:flutter/services.dart';
+import'package:provider/provider.dart';
+import 'calibration_data.dart';
 
 class SensorViewPage extends StatefulWidget {
   const SensorViewPage({super.key, required this.title});
@@ -136,7 +138,7 @@ class _SensorViewPageState extends State<SensorViewPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 50),
               child: TextButton(
-                  onPressed: toggleDataCollection,
+                  onPressed: () => toggleDataCollection(context),
                 style: textButtonStyle(context),
                 child: Text(buttonText),
 
@@ -268,7 +270,7 @@ class _SensorViewPageState extends State<SensorViewPage> {
   }
 
 
-  void toggleDataCollection() {
+  void toggleDataCollection(BuildContext context) {
     setState(() {
       collectingData = !collectingData;
       buttonText = collectingData ? "Stop Sensor" : "Start Sensor";
@@ -307,6 +309,11 @@ class _SensorViewPageState extends State<SensorViewPage> {
           _meanVelocityDuringRep = meanVelocity;
           _resultText = resultMessage;
         });
+
+
+        Provider.of<CalibrationData>(context, listen: false).updateCalibrationIndex();
+        // dismiss sheet
+        // Navigator.pop(context);
 
       }
 

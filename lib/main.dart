@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smart_barbell_collar/home_view.dart';
+import 'package:provider/provider.dart';
+import 'calibration_data.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,14 +18,17 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    return MaterialApp(
-      title: 'Smart Barbell Collar',
-      theme: ThemeData.dark().copyWith(
-        colorScheme: ThemeData.dark().colorScheme.copyWith(
-            secondary: Colors.blueGrey,
-        )
+    return ChangeNotifierProvider(
+      create: (BuildContext context) => CalibrationData(),
+      child: MaterialApp(
+        title: 'Smart Barbell Collar',
+        theme: ThemeData.dark().copyWith(
+          colorScheme: ThemeData.dark().colorScheme.copyWith(
+              secondary: Colors.blueGrey,
+          )
+        ),
+        home: const HomeView(title: 'Smart Barbell Collar'),
       ),
-      home: const HomeView(title: 'Smart Barbell Collar'),
     );
   }
 }
