@@ -5,7 +5,6 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'sensor_manager.dart';
 import 'constants.dart';
 import 'file_handler.dart';
-import 'package:flutter/services.dart';
 import'package:provider/provider.dart';
 import 'calibration_data.dart';
 
@@ -58,48 +57,56 @@ class _SensorViewPageState extends State<SensorViewPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Spacer(),
-            Text(
-              'Select Weight',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    _selectedWeight.toString(),
-                    style: Theme.of(context).textTheme.headline3,
-                  ),
-                  Text(
-                    ' lbs',
-                    style: Theme.of(context).textTheme.headline5,
-                  )
-                ]),
-            SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: Colors.white,
-                  inactiveTrackColor: const Color(0xFF8D8E98),
-                  thumbColor: Theme.of(context).colorScheme.secondary,
-                  overlayColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-                  thumbShape:
-                  const RoundSliderThumbShape(enabledThumbRadius: 15.0),
-                  overlayShape:
-                  const RoundSliderOverlayShape(overlayRadius: 25.0)),
-              child: Slider(
-                value: _selectedWeight.toDouble(),
-                min: 45.0,
-                max: 585.0,
-                onChanged: (double newValue) {
-                  int nearestFivePounds = roundedToNearest5(newValue);
-                  // int intValue = newValue.round();
-                  // int nearestFivePounds = (intValue ~/ 5) * 5;
-                  setState(() {
-                    _selectedWeight = nearestFivePounds;
-                  });
-                },
+            if (Provider.of<CalibrationData>(context).calibrationIsComplete(widget.title))...[
+              Text(
+                'Select Weight',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-            ),
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      _selectedWeight.toString(),
+                      style: Theme.of(context).textTheme.headline3,
+                    ),
+                    Text(
+                      ' lbs',
+                      style: Theme.of(context).textTheme.headline5,
+                    )
+                  ]),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: const Color(0xFF8D8E98),
+                    thumbColor: Theme.of(context).colorScheme.secondary,
+                    overlayColor: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                    thumbShape:
+                    const RoundSliderThumbShape(enabledThumbRadius: 15.0),
+                    overlayShape:
+                    const RoundSliderOverlayShape(overlayRadius: 25.0)),
+                child: Slider(
+                  value: _selectedWeight.toDouble(),
+                  min: 45.0,
+                  max: 585.0,
+                  onChanged: (double newValue) {
+                    int nearestFivePounds = roundedToNearest5(newValue);
+                    // int intValue = newValue.round();
+                    // int nearestFivePounds = (intValue ~/ 5) * 5;
+                    setState(() {
+                      _selectedWeight = nearestFivePounds;
+                    });
+                  },
+                ),
+              ),
+            ] else ... [
+              Text(
+                'Calibration Rep at ${Provider.of<CalibrationData>(context).currentCalibrationPercent(widget.title)}% 1RM',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ],
+
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -123,17 +130,19 @@ class _SensorViewPageState extends State<SensorViewPage> {
                 _meanVelocityDuringRep.toStringAsFixed(2),
                 style: Theme.of(context).textTheme.bodyMedium
             ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                  'Results:',
-                  style: Theme.of(context).textTheme.headline5
-              ),
-            ),
-            Text(
-                _resultText,
-                style: Theme.of(context).textTheme.bodyMedium
-            ),
+    if (Provider.of<CalibrationData>(context).calibrationIsComplete(widget.title))...[
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+              'Results:',
+              style: Theme.of(context).textTheme.headline5
+          ),
+        ),
+        Text(
+            _resultText,
+            style: Theme.of(context).textTheme.bodyMedium
+        ),
+      ],
             const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 50),
@@ -297,21 +306,50 @@ class _SensorViewPageState extends State<SensorViewPage> {
         List<double> repData = manager.getIsolatedRep(velocityArray);
         double meanVelocity = manager.meanVelocity(repData);
 
-        // calculate estimated 1rm from velocity data
-        double percent1RM = manager.percent1RM(meanVelocity);
-        double load1RM = _selectedWeight.toDouble() / percent1RM;
-        int loadToNearest5 = roundedToNearest5(load1RM);
-        int roundedPercent = (percent1RM * 100).round();
+        if (Provider.of<CalibrationData>(context, listen: false).calibrationIsComplete(widget.title)) {
+          // rep after calibration has been completed
+          // calculate estimated 1rm from velocity data
+          double? predictedPercent = Provider.of<CalibrationData>(context, listen: false).prediction(meanVelocity, widget.title);
+          if (predictedPercent != null) {
+            double error = Provider.of<CalibrationData>(context, listen: false).regressionError(widget.title);
+            int errorInt = (error * 100).round();
+            double scaledPercent = predictedPercent / 100.0;
+            double load1RM = _selectedWeight.toDouble() / scaledPercent;
+            int loadToNearest5 = roundedToNearest5(load1RM);
+            int roundedPercent = (predictedPercent).round();
 
-        String resultMessage = "We estimate that $_selectedWeight lbs is $roundedPercent% of your 1RM, \nAnd your actual 1RM is $loadToNearest5 lbs";
+            String resultMessage = "We estimate that $_selectedWeight lbs is $roundedPercent% +- $errorInt% of your 1RM, \nAnd your actual 1RM is around $loadToNearest5 lbs";
 
-        setState(() {
-          _meanVelocityDuringRep = meanVelocity;
-          _resultText = resultMessage;
-        });
+            setState(() {
+              _meanVelocityDuringRep = meanVelocity;
+              _resultText = resultMessage;
+            });
+          } else {
+            setState(() {
+              _meanVelocityDuringRep = meanVelocity;
+              _resultText = "Error accessing regression model";
+            });
+          }
+        } else {
+          // completed calibration rep. Update the current data point and advance index
+          if (widget.title != "Squat") { // squat is using hardcoded data for debug purposes for now
+            print('update calibration datapoint');
+            Provider.of<CalibrationData>(context, listen: false).updateCurrentCalibrationDataPoint(meanVelocity, widget.title);
+          }
+          Provider.of<CalibrationData>(context, listen: false).updateCalibrationIndex(widget.title);
 
+          if(Provider.of<CalibrationData>(context, listen: false).calibrationIsComplete(widget.title)) {
+            // this was the last calibration rep. Do linear regression
+            print('last calibration rep complete!');
+            Provider.of<CalibrationData>(context, listen: false).createRegressionModelFromCalibrationData(widget.title);
+          }
 
-        Provider.of<CalibrationData>(context, listen: false).updateCalibrationIndex();
+          // dismiss sheet
+          Navigator.pop(context);
+        }
+
+        // Provider.of<CalibrationData>(context, listen: false).updateCalibrationIndex(widget.title);
+        // Provider.of<CalibrationData>(context, listen: false).testLinearRegression();
         // dismiss sheet
         // Navigator.pop(context);
 

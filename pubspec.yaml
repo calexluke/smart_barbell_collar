@@ -40,6 +40,8 @@ dependencies:
   path_provider: ^2.0.12
   share_plus: ^6.3.0
   provider: ^6.0.5
+  ml_algo: ^16.17.7
+  ml_dataframe: ^1.6.0
 
 dev_dependencies:
   flutter_test:

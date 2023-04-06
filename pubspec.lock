@@ -50,6 +50,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.2"
+  csv:
+    dependency: transitive
+    description:
+      name: csv
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.0.1"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -100,6 +107,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  injector:
+    dependency: transitive
+    description:
+      name: injector
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   js:
     dependency: transitive
     description:
@@ -107,6 +121,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.6.4"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "4.8.0"
   lints:
     dependency: transitive
     description:
@@ -142,6 +163,34 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.4"
+  ml_algo:
+    dependency: "direct main"
+    description:
+      name: ml_algo
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "16.17.7"
+  ml_dataframe:
+    dependency: "direct main"
+    description:
+      name: ml_dataframe
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.6.0"
+  ml_linalg:
+    dependency: transitive
+    description:
+      name: ml_linalg
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "13.11.30"
+  ml_preprocessing:
+    dependency: transitive
+    description:
+      name: ml_preprocessing
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "7.0.2"
   nested:
     dependency: transitive
     description:
@@ -226,6 +275,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "6.0.5"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.2.1"
   sensors_plus:
     dependency: "direct main"
     description:
@@ -364,6 +420,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.2.0+3"
+  xrange:
+    dependency: transitive
+    description:
+      name: xrange
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
 sdks:
   dart: ">=2.18.4 <3.0.0"
   flutter: ">=3.0.0"
