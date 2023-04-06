@@ -222,19 +222,10 @@ class CalibrationData extends ChangeNotifier {
   LinearRegressor createRegressionModelForCalibrationData(List<CalibrationDataPoint> dataList) {
     DataFrame data = calibrationDataFrame(dataList);
     print('data: ${data.rows}');
-    final unlabelledData = DataFrame([
-      [velocityColumnName],
-      [0.6],
-    ]);
-    // Remember, we discussed the bias term above, "fitIntercept" says
-    // that we want to consider, how much biased our line is
     final model = LinearRegressor(data, percentColumnName, fitIntercept: true);
-    final prediction = model.predict(unlabelledData);
     final error = model.assess(data, MetricType.mape);
     print('Coefficients: ${model.coefficients}');
-    print('Prediction: $prediction');
     print('Error: $error');
-
     return model;
   }
 

@@ -53,6 +53,9 @@ class _HomeViewState extends State<HomeView> {
                   if (_selectedExercise.displayString != 'Squat') {
                     // for now, don't load saved data for squat, so we use hardcoded data for debug
                     await Provider.of<CalibrationData>(context, listen: false).loadDataFromPreferences(_selectedExercise.displayString),
+                    if (Provider.of<CalibrationData>(context, listen: false).calibrationIsComplete(_selectedExercise.displayString)) {
+                      Provider.of<CalibrationData>(context, listen: false).createRegressionModelFromCalibrationData(_selectedExercise.displayString),
+                    }
                   },
 
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
