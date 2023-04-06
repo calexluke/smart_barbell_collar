@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'sensor_view.dart';
 import 'constants.dart';
 import 'exercise_type.dart';
 import 'calibration_view.dart';
+import 'calibration_data.dart';
+import 'package:provider/provider.dart';
 
 // Home page - user selects exercise
 
@@ -23,6 +24,13 @@ class _HomeViewState extends State<HomeView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          IconButton(
+              onPressed: () => {
+                Provider.of<CalibrationData>(context, listen: false).resetCalibrationData()
+              },
+              icon: const Icon(Icons.delete))
+        ],
       ),
       body: Center(
         child: Column(
@@ -41,16 +49,20 @@ class _HomeViewState extends State<HomeView> {
             Padding(
                 padding: const EdgeInsets.symmetric(vertical: 50),
               child: TextButton(
-                onPressed: () => {
+                onPressed: () async => {
+                  if (_selectedExercise.displayString != 'Squat') {
+                    // for now, don't load saved data for squat, so we use hardcoded data for debug
+                    await Provider.of<CalibrationData>(context, listen: false).loadDataFromPreferences(_selectedExercise.displayString),
+                  },
+
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return CalibrationView(exercise: _selectedExercise);
-                  }))
+                  })),
               },
-                  child: Text("Start Exercise"),
+                  child: Text("Select Exercise"),
                   style: textButtonStyle(context),
               ),
-            )
-
+            ),
           ],
         ),
       ),

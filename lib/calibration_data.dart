@@ -1,7 +1,7 @@
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:ml_algo/ml_algo.dart';
 import 'package:ml_dataframe/ml_dataframe.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CalibrationDataPoint {
   int percent1RM;
@@ -13,6 +13,8 @@ class CalibrationData extends ChangeNotifier {
 
   final velocityColumnName = 'velocity';
   final percentColumnName = '%1RM';
+  final indexKey = 'index';
+  final dataKey = 'data';
 
   // hardcoded for testing purposes
   LinearRegressor? squatLoadVelocityModel;
@@ -126,6 +128,7 @@ class CalibrationData extends ChangeNotifier {
         print('invalid exercise type!');
         return;
     }
+    storeDataToPreferences(exercise);
     notifyListeners();
   }
 
@@ -144,6 +147,7 @@ class CalibrationData extends ChangeNotifier {
         print('invalid exercise type!');
         return;
     }
+    storeDataToPreferences(exercise);
     notifyListeners();
   }
 
@@ -260,5 +264,143 @@ class CalibrationData extends ChangeNotifier {
       return 0.0;
     }
 
+  }
+
+  List<String> stringListFromDataList(List<CalibrationDataPoint> dataList) {
+    List<String> stringList = [];
+    for (final dataPoint in dataList) {
+      String stringData = dataPoint.velocity.toString();
+      stringList.add(stringData);
+    }
+    return stringList;
+  }
+
+  List<CalibrationDataPoint> dataListFromStringList(List<String> stringList) {
+    List<CalibrationDataPoint> dataList = emptyCalibrationList();
+    for (var i = 0; i < stringList.length; i++) {
+      if (i < dataList.length) {
+        String stringDataPoint = stringList[i];
+        if (stringDataPoint != null) {
+          double dataValue = double.parse(stringDataPoint);
+          dataList[i].velocity = dataValue;
+        }
+      }
+    }
+    print('get data list from string list: $dataList');
+    return dataList;
+  }
+
+  Future<void> storeDataToPreferences(String exercise) async {
+    String finalIndexKey = '$exercise$indexKey';
+    String finalDataKey = '$exercise$dataKey';
+    List<String> dataToStore = [];
+    int indexToStore = 0;
+    switch (exercise) {
+      case 'Squat':
+        dataToStore = stringListFromDataList(squatCalibrationDataList);
+        indexToStore = squatCalibrationIndex;
+        break;
+      case 'Bench Press':
+        dataToStore = stringListFromDataList(benchCalibrationDataList);
+        indexToStore = benchCalibrationIndex;
+        break;
+      case 'Deadlift':
+        dataToStore = stringListFromDataList(deadliftCalibrationDataList);
+        indexToStore = deadliftCalibrationIndex;
+        break;
+      default:
+        print('invalid exercise type!');
+        return;
+    }
+
+    // obtain shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(finalIndexKey, indexToStore);
+    await prefs.setStringList(finalDataKey, dataToStore);
+  }
+
+  Future<void> loadDataFromPreferences(String exercise) async {
+    String finalIndexKey = '$exercise$indexKey';
+    String finalDataKey = '$exercise$dataKey';
+    // obtain shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    int indexFromStorage = prefs.getInt(finalIndexKey) ?? 0;
+    List<String>? stringDataFromStorage = prefs.getStringList(finalDataKey);
+    List<CalibrationDataPoint> dataFromStorage = [];
+    if (stringDataFromStorage != null) {
+      dataFromStorage = dataListFromStringList(stringDataFromStorage);
+    } else {
+      dataFromStorage = emptyCalibrationList();
+    }
+
+    print('get data from storage for $exercise');
+    print('index: $indexFromStorage');
+    print('data: ');
+    for (final data in dataFromStorage) {
+      print('${data.percent1RM}: ${data.velocity}');
+    }
+
+    switch (exercise) {
+      case 'Squat':
+        squatCalibrationIndex = indexFromStorage;
+        squatCalibrationDataList = dataFromStorage;
+        break;
+      case 'Bench Press':
+        benchCalibrationIndex = indexFromStorage;
+        benchCalibrationDataList = dataFromStorage;
+        break;
+      case 'Deadlift':
+        deadliftCalibrationIndex = indexFromStorage;
+        deadliftCalibrationDataList = dataFromStorage;
+        break;
+      default:
+        print('invalid exercise type!');
+    }
+  }
+
+  List<CalibrationDataPoint> emptyCalibrationList() {
+    return [
+      CalibrationDataPoint(20, 0.0),
+      CalibrationDataPoint(20, 0.0),
+      CalibrationDataPoint(20, 0.0),
+      CalibrationDataPoint(40, 0.0),
+      CalibrationDataPoint(40, 0.0),
+      CalibrationDataPoint(40, 0.0),
+      CalibrationDataPoint(60, 0.0),
+      CalibrationDataPoint(60, 0.0),
+      CalibrationDataPoint(60, 0.0),
+      CalibrationDataPoint(80, 0.0),
+      CalibrationDataPoint(90, 0.0),
+    ];
+  }
+
+  List<CalibrationDataPoint> hardcodedCalibrationList() {
+    return [
+      CalibrationDataPoint(20, 1.41),
+      CalibrationDataPoint(20, 1.41),
+      CalibrationDataPoint(20, 1.41),
+      CalibrationDataPoint(40, 1.16),
+      CalibrationDataPoint(40, 1.16),
+      CalibrationDataPoint(40, 1.16),
+      CalibrationDataPoint(60, 0.86),
+      CalibrationDataPoint(60, 0.86),
+      CalibrationDataPoint(60, 0.86),
+      CalibrationDataPoint(80, 0.55),
+      CalibrationDataPoint(90, 0.40),
+    ];
+  }
+
+  void resetCalibrationData() {
+    squatCalibrationDataList = hardcodedCalibrationList();
+    squatCalibrationIndex = 10;
+    storeDataToPreferences('Squat');
+
+    benchCalibrationDataList = emptyCalibrationList();
+    benchCalibrationIndex = 0;
+    storeDataToPreferences('Bench Press');
+
+    deadliftCalibrationDataList = emptyCalibrationList();
+    deadliftCalibrationIndex = 0;
+    storeDataToPreferences('Deadlift');
   }
 }
