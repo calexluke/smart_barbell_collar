@@ -332,10 +332,8 @@ class _SensorViewPageState extends State<SensorViewPage> {
           }
         } else {
           // completed calibration rep. Update the current data point and advance index
-          if (widget.title != "Squat") { // squat is using hardcoded data for debug purposes for now
-            print('update calibration datapoint');
-            Provider.of<CalibrationData>(context, listen: false).updateCurrentCalibrationDataPoint(meanVelocity, widget.title);
-          }
+          print('update calibration datapoint');
+          Provider.of<CalibrationData>(context, listen: false).updateCurrentCalibrationDataPoint(meanVelocity, widget.title);
           Provider.of<CalibrationData>(context, listen: false).updateCalibrationIndex(widget.title);
 
           if(Provider.of<CalibrationData>(context, listen: false).calibrationIsComplete(widget.title)) {

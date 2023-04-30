@@ -83,13 +83,4 @@ class SensorManager {
   double meanVelocity(List<double> velocityData) {
     return velocityData.average;
   }
-
-  double percent1RM(double meanVelocity) {
-    // calculate %1RM from velocity input and generic load/velocity curve from literature
-    // TODO: get slope and intercept from custom calibration curve for use and exercise
-    double slope = 1.179;
-    double intercept = -0.685;
-    double loadPercentage = slope + (intercept * meanVelocity);
-    return loadPercentage;
-  }
 }

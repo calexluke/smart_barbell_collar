@@ -18,19 +18,19 @@ class CalibrationData extends ChangeNotifier {
 
   // hardcoded for testing purposes
   LinearRegressor? squatLoadVelocityModel;
-  int squatCalibrationIndex = 10;
+  int squatCalibrationIndex = 0;
   List<CalibrationDataPoint> squatCalibrationDataList = [
-    CalibrationDataPoint(20, 1.41),
-    CalibrationDataPoint(20, 1.41),
-    CalibrationDataPoint(20, 1.41),
-    CalibrationDataPoint(40, 1.16),
-    CalibrationDataPoint(40, 1.16),
-    CalibrationDataPoint(40, 1.16),
-    CalibrationDataPoint(60, 0.86),
-    CalibrationDataPoint(60, 0.86),
-    CalibrationDataPoint(60, 0.86),
-    CalibrationDataPoint(80, 0.55),
-    CalibrationDataPoint(90, 0.40),
+    CalibrationDataPoint(20, 0.0),
+    CalibrationDataPoint(20, 0.0),
+    CalibrationDataPoint(20, 0.0),
+    CalibrationDataPoint(40, 0.0),
+    CalibrationDataPoint(40, 0.0),
+    CalibrationDataPoint(40, 0.0),
+    CalibrationDataPoint(60, 0.0),
+    CalibrationDataPoint(60, 0.0),
+    CalibrationDataPoint(60, 0.0),
+    CalibrationDataPoint(80, 0.0),
+    CalibrationDataPoint(90, 0.0),
   ];
 
   LinearRegressor? benchLoadVelocityModel;
@@ -365,25 +365,9 @@ class CalibrationData extends ChangeNotifier {
     ];
   }
 
-  List<CalibrationDataPoint> hardcodedCalibrationList() {
-    return [
-      CalibrationDataPoint(20, 1.41),
-      CalibrationDataPoint(20, 1.41),
-      CalibrationDataPoint(20, 1.41),
-      CalibrationDataPoint(40, 1.16),
-      CalibrationDataPoint(40, 1.16),
-      CalibrationDataPoint(40, 1.16),
-      CalibrationDataPoint(60, 0.86),
-      CalibrationDataPoint(60, 0.86),
-      CalibrationDataPoint(60, 0.86),
-      CalibrationDataPoint(80, 0.55),
-      CalibrationDataPoint(90, 0.40),
-    ];
-  }
-
   void resetCalibrationData() {
-    squatCalibrationDataList = hardcodedCalibrationList();
-    squatCalibrationIndex = 10;
+    squatCalibrationDataList = emptyCalibrationList();
+    squatCalibrationIndex = 0;
     storeDataToPreferences('Squat');
 
     benchCalibrationDataList = emptyCalibrationList();
